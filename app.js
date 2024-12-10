@@ -130,6 +130,11 @@ app.use(session({ secret: SECRET_KEY, resave: false, saveUninitialized: true, co
     res.json({ message: 'Post deleted successfully', deletedPost });
   });
 
-// user logout.
+  app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+      if (err) console.error(err);
+      res.redirect('/login');
+    });
+  });
 
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
