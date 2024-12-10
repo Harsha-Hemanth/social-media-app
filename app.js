@@ -94,11 +94,41 @@ app.use(session({ secret: SECRET_KEY, resave: false, saveUninitialized: true, co
     }
   });
 
-// post creation.
+  app.post('/posts', authenticateJWT, (req, res) => {
+    const { text } = req.body;
+  
+    if (!text || typeof text !== 'string') return res.status(400).json({ message: 'Please provide valid post content' });
+  
+    const newPost = { userId: req.user.userId, text };
+    posts.push(newPost);
+  
+    res.status(201).json({ message: 'Post created successfully' });
+  });
 
-// post updation.
+  app.put('/posts/:postId', authenticateJWT, (req, res) => {
+    const postId = parseInt(req.params.postId);
+    const { text } = req.body;
+  
+    const postIndex = posts.findIndex((post) => post.id === postId && post.userId === req.user.userId);
+  
+    if (postIndex === -1) return res.status(404).json({ message: 'Post not found' });
+  
+    posts[postIndex].text = text;
+  
+    res.json({ message: 'Post updated successfully', updatedPost: posts[postIndex] });
+  });
 
-// post deletion.
+  app.delete('/posts/:postId', authenticateJWT, (req, res) => {
+    const postId = parseInt(req.params.postId);
+  
+    const postIndex = posts.findIndex((post) => post.id === postId && post.userId === req.user.userId);
+  
+    if (postIndex === -1) return res.status(404).json({ message: 'Post not found' });
+  
+    const deletedPost = posts.splice(postIndex, 1)[0];
+  
+    res.json({ message: 'Post deleted successfully', deletedPost });
+  });
 
 // user logout.
 
