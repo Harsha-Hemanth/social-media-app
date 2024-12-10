@@ -21,9 +21,33 @@ app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: SECRET_KEY, resave: false, saveUninitialized: true, cookie: { secure: false } }));
 
 
-// authenticateJWT Function.
+  function authenticateJWT(req, res, next) {
+    const token = req.session.token;
+  
+    if (!token) return res.status(401).json({ message: 'Unauthorized' });
+  
+    try {
+      const decoded = jwt.verify(token, SECRET_KEY);
+      req.user = decoded;
+      next();
+    } catch (error) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+  }
 
-// requireAuth Function.
+  function requireAuth(req, res, next) {
+    const token = req.session.token;
+  
+    if (!token) return res.redirect('/login');
+  
+    try {
+      const decoded = jwt.verify(token, SECRET_KEY);
+      req.user = decoded;
+      next();
+    } catch (error) {
+      return res.redirect('/login');
+    }
+  }
 
 // routing HTML.
 
