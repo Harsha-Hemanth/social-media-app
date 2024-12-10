@@ -54,10 +54,45 @@ app.use(session({ secret: SECRET_KEY, resave: false, saveUninitialized: true, co
   app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
   app.get('/post', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', 'post.html')));
   app.get('/index', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html'), { username: req.user.username }));
-  
-// user registration.
 
-// user login.
+  app.post('/register', async (req, res) => {
+    const { username, email, password } = req.body;
+
+    try {
+      const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+
+      if (existingUser) return res.status(400).json({ message: 'User already exists' });
+
+      const newUser = new User({ username, email, password });
+      await newUser.save();
+
+      const token = jwt.sign({ userId: newUser._id, username: newUser.username }, SECRET_KEY, { expiresIn: '1h' });
+      req.session.token = token;
+
+      res.send({"message":`The user ${username}has been added`});
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  });
+
+  app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+  
+    try {
+      const user = await User.findOne({ username, password });
+  
+      if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+  
+      const token = jwt.sign({ userId: user._id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+      req.session.token = token;
+  
+      res.redirect({"mesage":`${user.username} has logged in`});
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  });
 
 // post creation.
 
